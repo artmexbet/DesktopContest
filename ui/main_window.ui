@@ -26,20 +26,11 @@
          <enum>QFrame::NoFrame</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="courses_page">
          <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0">
-           <widget class="QListWidget" name="courses_list_widget">
-            <property name="font">
-             <font>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
+          <item row="2" column="0">
            <widget class="QPushButton" name="open_course_btn">
             <property name="font">
              <font>
@@ -51,11 +42,35 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="0">
+           <widget class="QListWidget" name="courses_list_widget">
+            <property name="font">
+             <font>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Список курсов</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignHCenter|Qt::AlignTop</set>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
         <widget class="QWidget" name="lessons_page">
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="0">
+          <item row="1" column="0">
            <widget class="QListWidget" name="lessons_list_widget">
             <property name="font">
              <font>
@@ -64,7 +79,7 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="2" column="0">
            <widget class="QPushButton" name="open_lesson_btn">
             <property name="font">
              <font>
@@ -73,6 +88,21 @@
             </property>
             <property name="text">
              <string>Открыть</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Список уроков</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignHCenter|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -114,8 +144,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>698</width>
-               <height>688</height>
+               <width>200</width>
+               <height>431</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">

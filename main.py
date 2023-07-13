@@ -1,196 +1,13 @@
-import os
 import sys
-import json
 from threading import Thread
 from time import sleep
 
-import requests
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QInputDialog, QMessageBox, QListWidgetItem, QFileDialog
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication, QMainWindow, QInputDialog, QFileDialog
+
+from dialogs import LoginDialog, CodeReviewDialog
 from ui.main_window import Ui_MainWindow
-from ui.login_dialog import Ui_LoginDialog
-from ui.register_dialog import Ui_RegisterDialog
-from ui.code_review_dialog import Ui_CodeReviewDialog
-
-
-class CustomListWidgetItem(QListWidgetItem):
-    def __init__(self, item_text, custom_data=None):
-        super().__init__(item_text)
-        self.custom_data = custom_data
-
-
-class SavedData:
-    def __init__(self):
-        if os.path.exists("config.json"):
-            with open("config.json", encoding="utf-8") as f:
-                self.data = json.load(f)
-        else:
-            self.data = {"server": "", "login": "", "jwt_refresh": ""}
-            self.commit()
-
-    def __getattr__(self, item):
-        return self.data.get(item, None)
-
-    def commit(self):
-        with open("config.json", "w", encoding="utf-8") as f:
-            json.dump(self.data, f, ensure_ascii=False, indent=4)
-
-
-class RegisterDialog(QDialog, Ui_RegisterDialog):
-    def __init__(self, config: SavedData):
-        super().__init__()
-        self.setupUi(self)
-
-        self.config = config
-        self.is_ok = False
-
-        self.register_btn.clicked.connect(self.register)
-
-    def register(self):
-        login, password, name, email = self.login, self.password, self.name, self.email
-        if not login or not password or not name or not email:
-            self.status.setText("Все поля должны быть заполнены")
-            return
-        response = requests.post(f"{self.config.server}/reg",
-                                 json={"login": login, "password": password, "name": self.name, "email": self.email})
-        if response.status_code != 200:
-            self.status.setText(response.json()["status"])
-            return
-
-        self.response = response.json()
-        QMessageBox.information(self, "Итог", "Регистрация успешно выполнена")
-        self.close()
-
-    @property
-    def password(self) -> str:
-        return self.password_line.text()
-
-    @property
-    def login(self) -> str:
-        return self.login_line.text()
-
-    @property
-    def name(self) -> str:
-        return self.name_line.text()
-
-    @property
-    def email(self) -> str:
-        return self.email_line.text()
-
-
-class LoginDialog(QDialog, Ui_LoginDialog):
-    def __init__(self, config: SavedData):
-        super().__init__()
-        self.setupUi(self)
-
-        self.config = config
-
-        self.is_logined = False
-        self.response = {}
-
-        self.submit_btn.clicked.connect(self.submit)
-        self.register_btn.clicked.connect(self.register)
-
-    def submit(self):
-        login = self.login
-        password = self.password
-        if login and password:
-            response = requests.post(f"{self.config.server}/login",
-                                     json={"login": login, "password": password})
-            if response.status_code != 200:
-                self.status.setText("Неверный логин или пароль")
-                self.close()
-                return
-            self.response = response.json()
-            self.config.data["jwt_refresh"] = self.response["jwt_refresh"]
-            self.is_logined = True
-            self.close()
-        else:
-            self.status.setText("Логин и пароль должны быть заполнены")
-
-    def register(self):
-        reg_form = RegisterDialog(self.config)
-        reg_form.exec_()
-
-        if not reg_form.is_ok:
-            return
-
-        self.config.data["jwt_refresh"] = reg_form.response["jwt_refresh"]
-        self.is_logined = True
-        self.close()
-
-    @property
-    def password(self) -> str:
-        return self.password_line.text()
-
-    @property
-    def login(self) -> str:
-        return self.login_line.text()
-
-
-class LoginManager:
-    def __init__(self, config: SavedData):
-        self.server = f"{config.server}"
-        self.jwt_refresh = config.jwt_refresh
-        self.refresh_head = {"Authorization": "Bearer {}".format(self.jwt_refresh)}
-
-    @property
-    def access_head(self) -> dict:
-        jwt_access = requests.get(self.server + "/refresh", headers=self.refresh_head).json()["jwt_access"]
-        return {"Authorization": f"Bearer {jwt_access}"}
-
-    @property
-    def user_info(self) -> dict:
-        return requests.get(self.server + "/auth", headers=self.access_head).json()["info"]
-
-
-class Network:
-    def __init__(self, login_manager: LoginManager):
-        self.login_manager = login_manager
-        self.server = login_manager.server
-
-    def send_task(self, body, task_id):
-        response = requests.post(f"{self.server}/tasks/{task_id}", json=body, headers=self.login_manager.access_head)
-        js = response.json()
-        return js
-
-    def check_solve(self, solve_id):
-        response = requests.get(f"{self.server}/solves/{solve_id}", headers=self.login_manager.access_head).json()
-        return response
-
-    def get_solves(self, task_id):
-        response = requests.get(f"{self.server}/tasks/{task_id}/solves", headers=self.login_manager.access_head).json()
-        return response["solves"]
-
-    def get_task(self, task_id):
-        response = requests.get(f"{self.server}/tasks/{task_id}", headers=self.login_manager.access_head).json()
-        return response
-
-    @property
-    def courses(self):
-        return requests.get(f"{self.server}/courses", headers=self.login_manager.access_head).json()["courses"]
-
-
-class CodeReviewDialog(QDialog, Ui_CodeReviewDialog):
-    def __init__(self, network: Network, task_id):
-        super().__init__()
-        self.setupUi(self)
-
-        solves = network.get_solves(task_id)
-        for solve in solves:
-            item = CustomListWidgetItem(solve["id"], solve)
-            if solve["verdict"] == "OK":
-                item.setBackground(QColor(0, 255, 0, 128))
-            elif "Error" in solve["verdict"] or "Time limit" in solve["verdict"]:
-                item.setBackground(QColor(255, 0, 0, 128))
-            self.solves_list_widget.addItem(item)
-
-        self.solves_list_widget.currentItemChanged.connect(self.on_item_changed)
-
-    def on_item_changed(self, item):
-        self.verdict_label.setText(f'Вердикт: {item.custom_data["verdict"]}')
-        self.code_view.setText(item.custom_data["code"])
-        self.time_label.setText(f'Время выполнения: {item.custom_data["time"]}мс')
+from utillities import CustomListWidgetItem, SavedData, LoginManager, Network
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -341,7 +158,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         thread = Thread(
             target=check_task_status,
-            args=(self.network, self, response["solve_id"]),
+            args=(self.network, self, response["solve_id"], response["time_limit"]),
             name=response["solve_id"]
         )
         thread.start()
@@ -359,8 +176,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.config.commit()
 
 
-def check_task_status(network: Network, win: MainWindow, solve_id):
-    sleep(3)
+def check_task_status(network: Network, win: MainWindow, solve_id, wait_time: int):
+    sleep(wait_time * 3)
     resp = network.check_solve(solve_id)
     win.verdict_label.setText(resp["verdict"])
     win.reload_task_list()
