@@ -158,7 +158,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         thread = Thread(
             target=check_task_status,
-            args=(self.network, self, response["solve_id"], response["time_limit"]),
+            args=(self.network, self, response["solve_id"], self.current_task["time_limit"]),
             name=response["solve_id"]
         )
         thread.start()
