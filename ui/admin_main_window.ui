@@ -515,6 +515,18 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="create_tests">
+            <property name="font">
+             <font>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Создать тесты</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="label_17">
             <property name="font">
              <font>

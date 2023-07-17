@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QInputDialog, QFileDialog
 import sys
 import json
 
-from dialogs import LoginDialog
+from dialogs import LoginDialog, SaveTestDialog
 from utillities import SavedData, LoginManager, Network
 from ui.admin_main_window import Ui_AdminMainWindow
 
@@ -41,8 +41,13 @@ class MainWindow(QMainWindow, Ui_AdminMainWindow):
         self.create_lesson_btn.clicked.connect(self.create_lesson)
         self.add_tests_btn.clicked.connect(self.choose_tests)
         self.create_task_btn.clicked.connect(self.create_task)
+        self.create_tests.clicked.connect(self.create_tests_action)
 
         self.task_course_box.currentIndexChanged.connect(self.on_current_course_changed)
+
+    def create_tests_action(self):
+        dialog = SaveTestDialog()
+        dialog.exec_()
 
     def choose_tests(self):
         filename, res = QFileDialog.getOpenFileName(self, "Выберите тесты", "", "JSON *.json")

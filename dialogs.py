@@ -1,11 +1,42 @@
+import json
+
 import requests
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox, QFileDialog, QTextEdit
 
 from ui.code_review_dialog import Ui_CodeReviewDialog
 from ui.login_dialog import Ui_LoginDialog
 from ui.register_dialog import Ui_RegisterDialog
+from ui.save_tests_dialog import Ui_Dialog
 from utillities import SavedData, Network, CustomListWidgetItem
+
+
+class SaveTestDialog(QDialog, Ui_Dialog):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+        self.save_btn.clicked.connect(self.save)
+        self.add_row_btn.clicked.connect(self.add_row)
+        self.remove_row_btn.clicked.connect(lambda: self.tableWidget.setRowCount(self.tableWidget.rowCount() - 1))
+
+    def add_row(self):
+        self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+        self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, QTextEdit())
+        self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 1, QTextEdit())
+        self.tableWidget.resizeRowsToContents()
+
+    def save(self):
+        temp = {"tests": []}
+        for row in range(self.tableWidget.rowCount()):
+            print(row)
+            temp["tests"].append({"input": self.tableWidget.cellWidget(row, 0).toPlainText(),
+                                  "output": self.tableWidget.cellWidget(row, 1).toPlainText()})
+        filename, res = QFileDialog.getSaveFileName(self, "Выберите файл", "", "JSON *.json")
+        if not filename:
+            return
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(temp, f, ensure_ascii=False, indent=4)
 
 
 class RegisterDialog(QDialog, Ui_RegisterDialog):

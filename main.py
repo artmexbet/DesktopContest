@@ -3,7 +3,7 @@ from threading import Thread
 from time import sleep
 
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QInputDialog, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QInputDialog, QFileDialog, QTableWidgetItem
 
 from dialogs import LoginDialog, CodeReviewDialog
 from ui.main_window import Ui_MainWindow
@@ -102,7 +102,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.current_course is None:
             return
 
-        self.current_lesson = self.lessons_list_widget.currentItem().custom_data
+        self.current_lesson = self.network.get_lesson(self.lessons_list_widget.currentItem().custom_data["id"])
         self.current_lesson["tasks"].sort(key=lambda x: x["order"])
 
         self.reload_task_list()
@@ -112,12 +112,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def reload_task_list(self):
         self.tasks_list_widget.clear()
         for task in self.current_lesson["tasks"]:
-            solves = self.network.get_solves(task["id"])
+            # solves = self.network.get_solves(task["id"])
             item = CustomListWidgetItem(task["name"], task)
-            if solves and any(solve["verdict"] == "OK" for solve in solves):
-                item.setBackground(QColor(0, 255, 0, 128))
-            elif solves and all("Error" in solve["verdict"] or "Time limit" in solve["verdict"] for solve in solves):
-                item.setBackground(QColor(255, 0, 0, 128))
+            if "is_solved" in task:
+                if task["is_solved"]:
+                    item.setBackground(QColor(0, 255, 0, 128))
+                else:
+                    item.setBackground(QColor(255, 0, 0, 128))
             self.tasks_list_widget.addItem(item)
 
     def open_task(self):
@@ -131,6 +132,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.filepath_label.setText("Загрузите файл (можно drag'n'drop)")
         self.current_filename = None
         self.verdict_label.setText("")
+        self.input_label.setText(self.current_task["tests"][0]["input"])
+        self.output_label.setText(self.current_task["tests"][0]["output"])
         self.code_browser.clear()
 
     def add_file(self):

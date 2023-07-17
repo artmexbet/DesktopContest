@@ -66,6 +66,11 @@ class Network:
         response = requests.get(f"{self.server}/tasks/{task_id}", headers=self.login_manager.access_head).json()
         return response
 
+    def get_lesson(self, lesson_id):
+        response = requests.get(f"{self.server}/lessons/{lesson_id}", headers=self.login_manager.access_head).json()
+        response["tasks"].sort(key=lambda x: x["order"])
+        return response
+
     def add_course(self, name: str, description: str, language_id: str, pic_path: str):
         response = requests.post(
             f"{self.server}/courses",
